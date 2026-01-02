@@ -6,7 +6,19 @@ Because the original repo only contains frontend code and data updates were slow
 
 ## Basic Usage
 
-After installing the [python3](https://www.python.org/) dependencies in `requirements.txt`, execute `parse_class_pdf.py` to parse a class timetable pdf. It reads from the filename constant `CLASS_PDF_INPUT_FILE` defined in `config/constants.py` and outputs in `CLASSES_JSON_OUTPUT_FILE`. By default, these files are `klassen.pdf` and `classes.json`.
+After installing the [python3](https://www.python.org/) dependencies in `requirements.txt`, execute `parse_class_pdf.py` to parse a class timetable PDF.
+
+```bash
+./parse_class_pdf.py [-h] [-l LECTURERS] [-i INPUT] [-o OUTPUT] [lecturers_pos]
+```
+
+### Arguments
+
+- `-i`, `--input`: Path to the input PDF file. Defaults to `klassen.pdf`.
+- `-o`, `--output`: Path to the output JSON file. Defaults to `classes.json`.
+- `-l`, `--lecturers` or `lecturers_pos`: Path to the `lecturers.json` file. If provided, it is used to validate lecturer shorthands during parsing.
+
+The default values for input and output files are defined in `config/constants.py`.
 
 ## Project Roadmap
 

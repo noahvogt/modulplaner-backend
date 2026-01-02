@@ -16,13 +16,16 @@ from .models import (
 
 
 def get_modules_for_class_json(
-    modules: list[RawExtractedModule], class_name: str, degree_program: DegreeProgram
+    modules: list[RawExtractedModule],
+    class_name: str,
+    degree_program: DegreeProgram,
+    valid_lecturer_shorthands: list[str] | None = None,
 ) -> list[ClassJsonModule]:
     output_modules: list[ClassJsonModule] = []
 
     for input_module in modules:
         parsed_data: ParsedModuleCellTextData = parse_module_cell_text(
-            input_module.text, class_name, degree_program
+            input_module.text, class_name, degree_program, valid_lecturer_shorthands
         )
 
         output_modules.append(
@@ -51,6 +54,20 @@ def get_modules_for_class_json(
     return output_modules
 
 
+def deduplicate_modules(modules: list[ClassJsonModule]) -> list[ClassJsonModule]:
+    """de-duplicate modules based on their id field"""
+    unique_modules_map: dict[str, ClassJsonModule] = {}
+    for module in modules:
+        if module.id in unique_modules_map:
+            existing_module = unique_modules_map[module.id]
+            existing_module.pages = sorted(
+                list(set(existing_module.pages + module.pages))
+            )
+        else:
+            unique_modules_map[module.id] = module
+    return list(unique_modules_map.values())
+
+
 def get_modules_json(modules: List[ClassJsonModule]) -> str:
     """
     Serializes a list of ClassJsonModule objects into a formatted JSON string.
@@ -72,7 +89,10 @@ def parse_mixed_degree_programs(
 
 
 def parse_module_cell_text(
-    text: str, class_name: str, degree_program: DegreeProgram
+    text: str,
+    class_name: str,
+    degree_program: DegreeProgram,
+    valid_lecturer_shorthands: list[str] | None = None,
 ) -> ParsedModuleCellTextData:
     lines = text.split("\n")
     logging.debug("Parsing module cell text: \n%s", text)
@@ -94,16 +114,29 @@ def parse_module_cell_text(
         rooms=rooms,
         part_of_other_classes=[],
         teaching_type=teaching_type,
-        lecturer_shortnames=get_lecturer_shortnames(lines[1]),
+        lecturer_shortnames=get_lecturer_shortnames(
+            lines[1], valid_lecturer_shorthands
+        ),
     )
 
 
-def get_lecturer_shortnames(second_line: str) -> list[str]:
+def get_lecturer_shortnames(
+    second_line: str, valid_lecturer_shorthands: list[str] | None = None
+) -> list[str]:
     lecturer_shorthands: list[str] = []
     words = second_line.split(" ")
-    for word in words:
-        if len(word) == LECTURER_SHORTHAND_SIZE:
-            lecturer_shorthands.append(word)
+    if valid_lecturer_shorthands is None:
+        for word in words:
+            if len(word) == LECTURER_SHORTHAND_SIZE:
+                lecturer_shorthands.append(word)
+    else:
+        for word in words:
+            if word in valid_lecturer_shorthands or (
+                len(word) == LECTURER_SHORTHAND_SIZE and shorthand.startswith(word)
+                for shorthand in valid_lecturer_shorthands
+            ):
+                lecturer_shorthands.append(word)
+
     return lecturer_shorthands
 
 

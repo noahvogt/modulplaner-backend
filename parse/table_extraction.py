@@ -104,7 +104,9 @@ def get_modules_from_weekday(
     return modules
 
 
-def extract_data_from_class_pdf(input_filename: str) -> list[ClassPdfExtractionPageData]:
+def extract_data_from_class_pdf(
+    input_filename: str, lecturers_file=None
+) -> list[ClassPdfExtractionPageData]:
     """
     Extracts all data from class timetable pdf's
     """
