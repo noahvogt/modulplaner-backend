@@ -12,6 +12,7 @@ from .models import (
     DegreeProgram,
     TeachingType,
     Weekday,
+    StartsWithMatch,
 )
 
 
@@ -21,10 +22,14 @@ def get_modules_for_class_json(
     degree_program: DegreeProgram,
     valid_lecturer_shorthands: list[str] | None = None,
 ) -> list[ClassJsonModule]:
+    """
+    Parses the Raw Extracted Modules from the class pdf into the format to
+    export them to the classes.json file.
+    """
     output_modules: list[ClassJsonModule] = []
 
     for input_module in modules:
-        parsed_data: ParsedModuleCellTextData = parse_module_cell_text(
+        parsed_data: ParsedModuleCellTextData = parse_module_class_pdf_cell_text(
             input_module.text, class_name, degree_program, valid_lecturer_shorthands
         )
 
@@ -88,12 +93,15 @@ def parse_mixed_degree_programs(
     return degree_program
 
 
-def parse_module_cell_text(
+def parse_module_class_pdf_cell_text(
     text: str,
     class_name: str,
     degree_program: DegreeProgram,
     valid_lecturer_shorthands: list[str] | None = None,
 ) -> ParsedModuleCellTextData:
+    """
+    Parse a single class pdf module cell text.
+    """
     lines = text.split("\n")
     logging.debug("Parsing module cell text: \n%s", text)
     if len(lines) != 3 and len(lines) != 2:
@@ -123,24 +131,64 @@ def parse_module_cell_text(
 def get_lecturer_shortnames(
     second_line: str, valid_lecturer_shorthands: list[str] | None = None
 ) -> list[str]:
+    """
+    Get the lecturer shorthand based on the second class pdf cell line.
+    You can provide a list of valid lecturer shorthands for more accurate parsing.
+    """
     lecturer_shorthands: list[str] = []
     words = second_line.split(" ")
     if valid_lecturer_shorthands is None:
         for word in words:
             if len(word) == LECTURER_SHORTHAND_SIZE:
                 lecturer_shorthands.append(word)
+            else:
+                logging.warning("Could not get lecturer shorthand from word: %s", word)
     else:
         for word in words:
-            if word in valid_lecturer_shorthands or (
-                len(word) == LECTURER_SHORTHAND_SIZE and shorthand.startswith(word)
-                for shorthand in valid_lecturer_shorthands
-            ):
-                lecturer_shorthands.append(word)
+            exact_starts_with_match = matches_startswith(
+                word, valid_lecturer_shorthands
+            )
+            minus_last_char_starts_with_match = matches_startswith(
+                word[:-1], valid_lecturer_shorthands
+            )
 
+            if word in valid_lecturer_shorthands:
+                lecturer_shorthands.append(word)
+            elif is_valid_starts_with_match(exact_starts_with_match):
+                lecturer_shorthands.append(exact_starts_with_match.shorthand_found)
+            elif is_valid_starts_with_match(minus_last_char_starts_with_match):
+                lecturer_shorthands.append(
+                    minus_last_char_starts_with_match.shorthand_found
+                )
+            else:
+                logging.warning("Could not get lecturer shorthand from word: %s", word)
     return lecturer_shorthands
 
 
+def is_valid_starts_with_match(exact_starts_with_match: StartsWithMatch) -> bool:
+    return (
+        exact_starts_with_match.shorthand_found != ""
+        and exact_starts_with_match.num_of_matches == 1
+    )
+
+
+def matches_startswith(
+    word: str, valid_lecturer_shorthands: list[str]
+) -> StartsWithMatch:
+    shorthand_with_start: str = ""
+    # catch the number of matches to make sure the matching is unambiguous
+    num_of_startwith_matches: int = 0
+    for shorthand in valid_lecturer_shorthands:
+        if shorthand.startswith(word):
+            shorthand_with_start = shorthand
+            num_of_startwith_matches += 1
+    return StartsWithMatch(shorthand_with_start, num_of_startwith_matches)
+
+
 def get_module_shorthand(first_line: str, class_name: str) -> str:
+    """
+    Get the module shorthand based on the first class pdf cell line.
+    """
     words = first_line.split(" ")
     if len(words) < 1:
         raise RuntimeError("Cannot extract module shorthand")
@@ -162,18 +210,25 @@ def get_id(
     start_seconds: int,
     end_seconds: int,
 ) -> str:
+    """Calculate the json id of a module."""
     return (
         f"{class_name}-{module_shorthand}-{weekday.index}-{start_seconds}-{end_seconds}"
     )
 
 
 def get_teaching_type(third_line: str) -> TeachingType:
+    """
+    Get the teaching type based on the third class pdf cell line.
+    """
     if "Online" in third_line:
         return TeachingType.ONLINE
     return TeachingType.ON_SITE
 
 
 def get_rooms(third_line: str) -> list[str]:
+    """
+    Get the rooms based on the third class pdf cell line.
+    """
     if "DSMixe" in third_line:
         return []
 

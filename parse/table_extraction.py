@@ -2,7 +2,7 @@ import logging
 from pdfplumber.page import Page
 import pdfplumber
 
-from config import TABLE_SETTINGS, ALLOWED_TIMESLOTS
+from config import CLASS_PDF_TABLE_SETTINGS, ALLOWED_TIMESLOTS
 from .models import (
     Weekday,
     TimeSlot,
@@ -120,7 +120,7 @@ def extract_data_from_class_pdf(
             for day in Weekday:
                 weekday_areas[day] = Area(0, 0, 0, 0)
 
-            found_tables = page.find_tables(TABLE_SETTINGS)
+            found_tables = page.find_tables(CLASS_PDF_TABLE_SETTINGS)
             logging.debug(
                 "amount of tables found on page %d: %d",
                 page_index + 1,

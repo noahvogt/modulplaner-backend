@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 import logging
-import argparse
+from argparse import ArgumentParser
+import pickle
 import json
 
 from parse import (
@@ -22,6 +23,7 @@ def get_valid_lecturers(file_path: str) -> list[str]:
     """
     valid_lecturers: list[str] = []
     try:
+        print(f"READING: '{file_path}'")
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
             if isinstance(data, list):
@@ -37,7 +39,7 @@ def get_valid_lecturers(file_path: str) -> list[str]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Parse class PDF to JSON.")
+    parser = ArgumentParser(description="Parse class PDF to JSON.")
     parser.add_argument(
         "-l", "--lecturers", help="Path to the lecturers.json file", default=None
     )
@@ -51,14 +53,18 @@ def main() -> None:
         default=CLASSES_JSON_OUTPUT_FILE,
     )
     parser.add_argument(
-        "lecturers_pos",
-        nargs="?",
-        help="Path to the lecturers.json file (positional)",
+        "--save-intermediate",
+        help="Path to save the intermediate extraction data (pickle format) and exit",
+        default=None,
+    )
+    parser.add_argument(
+        "--load-intermediate",
+        help="Path to load the intermediate extraction data from (pickle format) and skip extraction",
         default=None,
     )
 
     args = parser.parse_args()
-    lecturers_file = args.lecturers or args.lecturers_pos
+    lecturers_file = args.lecturers
 
     logging.basicConfig(level=logging.DEBUG)
 
@@ -66,9 +72,20 @@ def main() -> None:
     if lecturers_file:
         valid_lecturer_shorthands = get_valid_lecturers(lecturers_file)
 
-    extraction_data: list[ClassPdfExtractionPageData] = extract_data_from_class_pdf(
-        args.input
-    )
+    extraction_data: list[ClassPdfExtractionPageData]
+
+    if args.load_intermediate:
+        logging.info("Loading intermediate data from %s", args.load_intermediate)
+        with open(args.load_intermediate, "rb") as f:
+            extraction_data = pickle.load(f)
+    else:
+        extraction_data = extract_data_from_class_pdf(args.input)
+        if args.save_intermediate:
+            logging.info("Saving intermediate data to %s", args.save_intermediate)
+            with open(args.save_intermediate, "wb") as f:
+                pickle.dump(extraction_data, f)
+            return
+
     parsed_modules: list[ClassJsonModule] = [
         module
         for data in extraction_data

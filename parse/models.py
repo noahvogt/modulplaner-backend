@@ -1,6 +1,6 @@
 from enum import Enum, unique
 from dataclasses import dataclass
-from typing import Annotated, TYPE_CHECKING
+from typing import Annotated
 
 from pydantic import BaseModel, PlainSerializer, Field, ConfigDict
 
@@ -142,9 +142,24 @@ class TeachingType(Enum):
 
 
 @dataclass
-class Teacher:
+class RawLecturer:
+    """
+    Basic representation of an extracted lecturer from a pdf that needs to be parsed.
+    """
+
     shorthand: str
-    full_name: str
+    firstname: str
+    surname: str
+
+
+class Lecturer(BaseModel):
+    """
+    JSON-serializable representation of a parsed lecturer ready to be exported.
+    """
+
+    short: str
+    surname: str
+    firstname: str
 
 
 # tells pydantic to to use the index field for the special Weekday Enum
@@ -182,3 +197,9 @@ class ClassJsonModule(BaseModel):
 class ClassPdfExtractionPageData:
     raw_extracted_modules: list[RawExtractedModule]
     page_metadata: PageMetadata
+
+
+@dataclass
+class StartsWithMatch:
+    shorthand_found: str
+    num_of_matches: int
