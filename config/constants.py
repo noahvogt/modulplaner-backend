@@ -9,18 +9,7 @@ CLASS_PDF_TABLE_SETTINGS = {
 }
 
 TOLERANCE = 3
-
-LECTURER_SHORTHAND_SIZE = 6
-LECTURER_SHORTHAND_PDF_PDF_INPUT_FILE = "lecturer_shorthands.pdf"
-LECTURER_SHORTHAND_JSON_OUTPUT_FILE = "lecturers.json"
-LECTURER_SHORTHAND_PDF_TABLE_SETTINGS = {
-    "vertical_strategy": "text",
-    "horizontal_strategy": "text",
-    "snap_tolerance": 5,
-    "intersection_x_tolerance": 15,
-}
-LECTURER_SHORTHAND_PDF_ROW_SKIP_VALUES = ["Name Nachname Vorname", "vak"]
-
+REQUESTS_TIMEOUT = 4
 ALLOWED_TIMESLOTS = [
     ("8:15", "9:00"),
     ("9:15", "10:00"),
@@ -37,3 +26,26 @@ ALLOWED_TIMESLOTS = [
     ("19:45", "20:30"),
     ("20:30", "21:15"),
 ]
+
+LECTURER_SHORTHAND_SIZE = 6
+LECTURER_SHORTHAND_PDF_PDF_INPUT_FILE = "lecturer_shorthands.pdf"
+LECTURER_SHORTHAND_JSON_OUTPUT_FILE = "lecturers.json"
+LECTURER_SHORTHAND_PDF_TABLE_SETTINGS = {
+    "vertical_strategy": "text",
+    "horizontal_strategy": "text",
+    "snap_tolerance": 5,
+    "intersection_x_tolerance": 15,
+}
+LECTURER_SHORTHAND_PDF_ROW_SKIP_VALUES = ["Name Nachname Vorname", "vak"]
+
+
+FRONTEND_RIPPER_BASE_URL_DEFAULT = "https://pub092.cs.technik.fhnw.ch/data"
+FRONTEND_RIPPER_SEMESTER_VERSIONS_FILE = "semester-versions.json"
+FRONTEND_RIPPER_BASE_FILES = [
+    "changelog.html",
+    "lecturers.json",
+    "messages.json",
+    "module-history.json",
+    "modules.json",
+]
+FRONTEND_RIPPER_OUTPUT_DIR_DEFAULT = "out"

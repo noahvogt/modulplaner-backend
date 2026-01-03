@@ -55,6 +55,12 @@ jq -s 'add | unique' previous_lecturers.json script_output.json > merged.json
 
 For more information, show the cli arguments via `./extract_lecturer_shorthands_pdf.py -h`.
 
+### rip_modulplaner_frontend_data.py
+
+Rips all data files from a live modulplaner-frontend server.
+
+For more information, show the cli arguments via `./rip_modulplaner_frontend_data.py -h`.
+
 ## Project Roadmap
 
 Currently I am working on refining the core data generation. In the future, I can see myself also working on:
