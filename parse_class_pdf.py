@@ -9,6 +9,7 @@ from parse import (
     extract_data_from_class_pdf,
     get_modules_for_class_json,
     get_modules_json,
+    get_classes,
     deduplicate_modules,
     ClassPdfExtractionPageData,
     ClassJsonModule,
@@ -93,6 +94,7 @@ def main() -> None:
             data.raw_extracted_modules,
             data.page_metadata.class_name,
             data.page_metadata.degree_program,
+            get_classes(extraction_data),
             valid_lecturer_shorthands,
         )
     ]

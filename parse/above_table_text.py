@@ -80,12 +80,12 @@ def get_degree_program(
 
     if class_name[1] == "D":
         return DegreeProgram.DATASCIENCE
-    if class_name[1] == "I" or class_name[1:4] == "MSE":
+    if class_name[1] == "I":
         return DegreeProgram.INFORMATIK
     if class_name[1:3] == "iC":
         return DegreeProgram.ICOMPETENCE
 
-    if class_name == "alle":
+    if class_name == "alle" or class_name[1:4] == "MSE":
         return DegreeProgram.AGNOSTIC
 
     raise RuntimeError(f"No Valid DegreeProgram found in line {third_line}")

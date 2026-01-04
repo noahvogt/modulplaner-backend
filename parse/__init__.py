@@ -3,5 +3,6 @@ from .parse_modules import (
     get_modules_json,
     get_modules_for_class_json,
     deduplicate_modules,
+    get_classes,
 )
 from .models import ClassPdfExtractionPageData, ClassJsonModule, RawLecturer, Lecturer

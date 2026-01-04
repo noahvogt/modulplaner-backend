@@ -93,7 +93,7 @@ class DegreeProgram(Enum):
     MASCHINENBAU = "Maschinenbau"
     SYSTEMTECHNIK = "Systemtechnik"
     WIRTSCHAFT_ING = "Wirtschaftsingenieurwesen"
-    AGNOSTIC = "agnostic"
+    AGNOSTIC = "SG-???"
 
 
 @dataclass

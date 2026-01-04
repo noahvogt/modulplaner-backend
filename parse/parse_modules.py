@@ -13,6 +13,7 @@ from .models import (
     TeachingType,
     Weekday,
     StartsWithMatch,
+    ClassPdfExtractionPageData,
 )
 
 
@@ -20,6 +21,7 @@ def get_modules_for_class_json(
     modules: list[RawExtractedModule],
     class_name: str,
     degree_program: DegreeProgram,
+    all_class_names: list[str],
     valid_lecturer_shorthands: list[str] | None = None,
 ) -> list[ClassJsonModule]:
     """
@@ -30,7 +32,7 @@ def get_modules_for_class_json(
 
     for input_module in modules:
         parsed_data: ParsedModuleCellTextData = parse_module_class_pdf_cell_text(
-            input_module.text, class_name, degree_program, valid_lecturer_shorthands
+            input_module.text, class_name, degree_program, all_class_names, valid_lecturer_shorthands
         )
 
         output_modules.append(
@@ -97,6 +99,7 @@ def parse_module_class_pdf_cell_text(
     text: str,
     class_name: str,
     degree_program: DegreeProgram,
+    all_class_names: list[str],
     valid_lecturer_shorthands: list[str] | None = None,
 ) -> ParsedModuleCellTextData:
     """
@@ -113,7 +116,7 @@ def parse_module_class_pdf_cell_text(
         rooms = []
         teaching_type = TeachingType.ON_SITE
 
-    module_shorthand = get_module_shorthand(lines[0], class_name)
+    module_shorthand = get_module_shorthand(lines[0], class_name, all_class_names)
 
     return ParsedModuleCellTextData(
         module_shorthand=module_shorthand,
@@ -185,7 +188,9 @@ def matches_startswith(
     return StartsWithMatch(shorthand_with_start, num_of_startwith_matches)
 
 
-def get_module_shorthand(first_line: str, class_name: str) -> str:
+def get_module_shorthand(
+    first_line: str, class_name: str, all_class_names: list[str]
+) -> str:
     """
     Get the module shorthand based on the first class pdf cell line.
     """
@@ -195,8 +200,24 @@ def get_module_shorthand(first_line: str, class_name: str) -> str:
     word = words[0]
     if len(words) == 1:
         for i in reversed(range(len(class_name) + 1)):
-            if word.endswith(class_name[0:i]):
-                word = word[: word.rfind(class_name[0:i])]
+            class_name_part = class_name[0:i]
+            if word.endswith(class_name_part):
+                word = word[: word.rfind(class_name_part)]
+                debug_msg = (
+                    f"cut off class name part '{class_name_part}'"
+                    + f" of class name '{class_name}' in line '{first_line}'"
+                )
+                logging.debug(debug_msg)
+                break
+
+        for foreign_class_name in all_class_names:
+            if word.endswith(foreign_class_name):
+                word = word[: word.rfind(foreign_class_name)]
+                logging.debug(
+                    "cut off class name '%s' in line '%s'",
+                    foreign_class_name,
+                    first_line,
+                )
                 break
     if len(word) == 0:
         raise RuntimeError("Module shorthand cannot be empty")
@@ -234,3 +255,10 @@ def get_rooms(third_line: str) -> list[str]:
 
     words = third_line.split(" ")
     return words
+
+
+def get_classes(extraction_data: list[ClassPdfExtractionPageData]) -> list[str]:
+    """
+    Get the classes from the class page's metadata.
+    """
+    return [page_data.page_metadata.class_name for page_data in extraction_data]
