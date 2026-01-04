@@ -2,7 +2,7 @@ import logging
 from pdfplumber.page import Page
 import pdfplumber
 
-from config import CLASS_PDF_TABLE_SETTINGS, ALLOWED_TIMESLOTS
+from config import CLASS_PDF_TABLE_SETTINGS, ALLOWED_TIMESLOTS, CLASS_PDF_MIN_DIMENSIONS
 from .models import (
     Weekday,
     TimeSlot,
@@ -49,7 +49,17 @@ def get_modules_from_weekday(
     """
     Extracts the modules (raw text and start/end) of a weekday on a single pdf page
     """
-    highest_y_level = timeslot_y_levels[allowed_time_slots[-1]].y2
+    try:
+        highest_y_level = timeslot_y_levels[allowed_time_slots[-1]].y2
+    except KeyError:
+        logging.warning("Highest allowed timeslot was not found. Trying lower one's.")
+        for time_slot in allowed_time_slots[:-1]:
+            try:
+                highest_y_level = timeslot_y_levels[allowed_time_slots[-1]].y2
+            except KeyError:
+                continue
+            finally:
+                break
     modules = []
     while len(unmerged_time_entries.cells) > 0:
         area = unmerged_time_entries.cells.pop(0)
@@ -126,7 +136,23 @@ def extract_data_from_class_pdf(
                 page_index + 1,
                 len(found_tables),
             )
-            table = found_tables[0]
+            usable_table_index: int = 0
+            if len(found_tables) > 1:
+                num_of_tables_with_at_least_min_dimensions: int = 0
+                for table_index, table in enumerate(found_tables):
+                    x0, top, x1, bottom = table.bbox
+                    width = x1 - x0
+                    height = bottom - top
+                    logging.debug(
+                        "table num %d: width: %d, height: %d",
+                        table_index + 1,
+                        width,
+                        height,
+                    )
+                    if width >= CLASS_PDF_MIN_DIMENSIONS and height >= CLASS_PDF_MIN_DIMENSIONS:
+                        num_of_tables_with_at_least_min_dimensions += 1
+                        usable_table_index = table_index
+            table = found_tables[usable_table_index]
             table_y1 = table.bbox[1]
             text_above_table = get_above_table_text(page, table_y1)
 

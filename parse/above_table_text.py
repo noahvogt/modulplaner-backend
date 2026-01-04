@@ -58,35 +58,44 @@ def get_class_name(third_line: str) -> str:
     first_space_index = third_line.find(" ")
     if first_space_index == -1:
         raise RuntimeError("No space character found in third line")
+    if len(third_line) > 2 and third_line[0:2] == "- ":
+        return third_line[2:]
     return third_line[0:first_space_index]
 
 
 def get_degree_program(
     third_line: str, class_name: str, previous_page_metadata: list[PageMetadata]
 ) -> DegreeProgram:
+    logging.debug("class_name: '%s'", class_name)
     if "Kontext BWL" and "Kommunikation" and "GSW" in third_line:
         return DegreeProgram.MIXED_BWL_GSW_KOMM
     for degree_program in DegreeProgram:
         if degree_program.value in third_line:
             return degree_program
     logging.warning("Using heuristics to guess the degree_program in %s", third_line)
-    for page_metadata in previous_page_metadata:
-        if page_metadata.class_name == class_name[:-1]:
-            return page_metadata.degree_program
-    if class_name[-1] == class_name[-2]:
+    try:
         for page_metadata in previous_page_metadata:
-            if class_name[:-2] in page_metadata.class_name:
+            if page_metadata.class_name == class_name[:-1]:
                 return page_metadata.degree_program
+        if class_name[-1] == class_name[-2]:
+            for page_metadata in previous_page_metadata:
+                if class_name[:-2] in page_metadata.class_name:
+                    return page_metadata.degree_program
+    except IndexError:
+        pass
 
-    if class_name[1] == "D":
-        return DegreeProgram.DATASCIENCE
-    if class_name[1] == "I":
-        return DegreeProgram.INFORMATIK
-    if class_name[1:3] == "iC":
-        return DegreeProgram.ICOMPETENCE
+    try:
+        if class_name[1] == "D":
+            return DegreeProgram.DATASCIENCE
+        if class_name[1] == "I":
+            return DegreeProgram.INFORMATIK
+        if class_name[1:3] == "iC":
+            return DegreeProgram.ICOMPETENCE
 
-    if class_name == "alle" or class_name[1:4] == "MSE":
-        return DegreeProgram.AGNOSTIC
+        if class_name == "alle" or class_name[1:4] == "MSE":
+            return DegreeProgram.AGNOSTIC
+    except IndexError:
+        pass
 
     raise RuntimeError(f"No Valid DegreeProgram found in line {third_line}")
 

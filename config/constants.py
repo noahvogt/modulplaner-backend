@@ -7,6 +7,7 @@ CLASS_PDF_TABLE_SETTINGS = {
     "join_tolerance": 3,
     "edge_min_length": 3,
 }
+CLASS_PDF_MIN_DIMENSIONS = 150
 
 TOLERANCE = 3
 REQUESTS_TIMEOUT = 4
