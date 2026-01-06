@@ -33,8 +33,8 @@ Execute the following to parse a class timetable PDF into the `classes.json` fil
 - `-i`, `--input`: Path to the input PDF file. Defaults to `klassen.pdf`.
 - `-o`, `--output`: Path to the output JSON file. Defaults to `classes.json`.
 - `-l`, `--lecturers`: Path to the `lecturers.json` file. If provided, it is used to validate lecturer shorthands during parsing.
-- `--save-intermediate`: Path to save the intermediate extraction data (pickle format) and exit. Useful for skipping the slow extraction stage in subsequent runs.
-- `--load-intermediate`: Path to load the intermediate extraction data from (pickle format) and skip extraction.
+- `--save-intermediate`: Path to save the intermediate extraction data (JSON format) and exit. Useful for skipping the slow extraction stage in subsequent runs.
+- `--load-intermediate`: Path to load the intermediate extraction data from (JSON format) and skip extraction.
 
 The default values for input and output files are defined in `config/constants.py`.
 

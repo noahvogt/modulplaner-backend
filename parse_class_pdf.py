@@ -2,8 +2,8 @@
 
 import logging
 from argparse import ArgumentParser
-import pickle
 import json
+from pydantic import TypeAdapter
 
 from parse import (
     extract_data_from_class_pdf,
@@ -24,7 +24,7 @@ def get_valid_lecturers(file_path: str) -> list[str]:
     """
     valid_lecturers: list[str] = []
     try:
-        print(f"READING: '{file_path}'")
+        logging.warning("reading lecturers file: '%s'", file_path)
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
             if isinstance(data, list):
@@ -55,19 +55,19 @@ def main() -> None:
     )
     parser.add_argument(
         "--save-intermediate",
-        help="Path to save the intermediate extraction data (pickle format) and exit",
+        help="Path to save the intermediate extraction data (JSON format) and exit",
         default=None,
     )
     parser.add_argument(
         "--load-intermediate",
-        help="Path to load the intermediate extraction data from (pickle format) and skip extraction",
+        help="Path to load the intermediate extraction data from (JSON format) and skip extraction",
         default=None,
     )
 
     args = parser.parse_args()
     lecturers_file = args.lecturers
 
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     valid_lecturer_shorthands: list[str] | None = None
     if lecturers_file:
@@ -77,14 +77,20 @@ def main() -> None:
 
     if args.load_intermediate:
         logging.info("Loading intermediate data from %s", args.load_intermediate)
-        with open(args.load_intermediate, "rb") as f:
-            extraction_data = pickle.load(f)
+        with open(args.load_intermediate, "r", encoding="utf-8") as f:
+            extraction_data = TypeAdapter(
+                list[ClassPdfExtractionPageData]
+            ).validate_json(f.read())
     else:
         extraction_data = extract_data_from_class_pdf(args.input)
         if args.save_intermediate:
             logging.info("Saving intermediate data to %s", args.save_intermediate)
-            with open(args.save_intermediate, "wb") as f:
-                pickle.dump(extraction_data, f)
+            with open(args.save_intermediate, "w", encoding="utf-8") as f:
+                f.write(
+                    TypeAdapter(list[ClassPdfExtractionPageData])
+                    .dump_json(extraction_data)
+                    .decode("utf-8")
+                )
             return
 
     parsed_modules: list[ClassJsonModule] = [

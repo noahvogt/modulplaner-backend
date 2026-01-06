@@ -185,7 +185,9 @@ def matches_startswith(
         if shorthand.startswith(word):
             shorthand_with_start = shorthand
             num_of_startwith_matches += 1
-    return StartsWithMatch(shorthand_with_start, num_of_startwith_matches)
+    return StartsWithMatch(
+        shorthand_found=shorthand_with_start, num_of_matches=num_of_startwith_matches
+    )
 
 
 def get_module_shorthand(

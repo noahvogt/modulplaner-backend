@@ -20,14 +20,21 @@ def parse_above_table_text(
         raise RuntimeError("Invalid Number of Lines.")
 
     semester_type: SemesterType = get_semester_value(lines[0])
-    semester: Semester = Semester(get_semester_year(lines[0]), semester_type)
+    semester: Semester = Semester(
+        yyyy=get_semester_year(lines[0]), semester_type=semester_type
+    )
     class_name: str = get_class_name(lines[2])
     degree_program: DegreeProgram = get_degree_program(
         lines[2], class_name, previous_page_metadata
     )
     export_timestamp: ExportTimestamp = get_export_timestamp(lines[1])
 
-    return PageMetadata(semester, export_timestamp, class_name, degree_program)
+    return PageMetadata(
+        semester=semester,
+        export_timestamp=export_timestamp,
+        class_name=class_name,
+        degree_program=degree_program,
+    )
 
 
 def get_export_timestamp(second_line: str) -> ExportTimestamp:
@@ -51,7 +58,10 @@ def get_export_timestamp(second_line: str) -> ExportTimestamp:
     else:
         raise RuntimeError("No Time found")
 
-    return ExportTimestamp(Date(date_yyyy, date_mm, date_dd), Time(time_hh, time_mm))
+    return ExportTimestamp(
+        date=Date(yyyy=date_yyyy, mm=date_mm, dd=date_dd),
+        time=Time(hh=time_hh, mm=time_mm),
+    )
 
 
 def get_class_name(third_line: str) -> str:

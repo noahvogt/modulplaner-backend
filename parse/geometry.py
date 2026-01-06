@@ -27,7 +27,9 @@ def is_line_at_bottom(
     if not is_vertical_match(line.y, area.y2, tolerance):
         return False
 
-    return has_horizontal_overlap(XLevel(line.x1, line.x2), XLevel(area.x1, area.x2))
+    return has_horizontal_overlap(
+        XLevel(x1=line.x1, x2=line.x2), XLevel(x1=area.x1, x2=area.x2)
+    )
 
 
 def is_area_below(area1: Area, area2: Area, tolerance: float = TOLERANCE) -> bool:
@@ -39,7 +41,7 @@ def is_area_below(area1: Area, area2: Area, tolerance: float = TOLERANCE) -> boo
         return False
 
     return has_horizontal_overlap(
-        XLevel(area1.x1, area1.x2), XLevel(area2.x1, area2.x2)
+        XLevel(x1=area1.x1, x2=area1.x2), XLevel(x1=area2.x1, x2=area2.x2)
     )
 
 

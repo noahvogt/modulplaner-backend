@@ -24,7 +24,8 @@ from .geometry import (
 from .img import is_mostly_white_area
 
 allowed_time_slots: list[TimeSlot] = [
-    TimeSlot(*timeslot_tuple) for timeslot_tuple in ALLOWED_TIMESLOTS
+    TimeSlot(start_time=timeslot_tuple[0], end_time=timeslot_tuple[1])
+    for timeslot_tuple in ALLOWED_TIMESLOTS
 ]
 
 
@@ -101,7 +102,9 @@ def get_modules_from_weekday(
                     found_matching_next_cell_index
                 )
                 logging.debug("matched cell area: %s", matched_area)
-                area = Area(area.x1, area.y1, matched_area.x2, matched_area.y2)
+                area = Area(
+                    x1=area.x1, y1=area.y1, x2=matched_area.x2, y2=matched_area.y2
+                )
 
         text = page.crop((area.x1, area.y1, area.x2, area.y2)).extract_text()
         timeslot = get_timeslot_for_area(area, timeslot_y_levels)
@@ -109,7 +112,13 @@ def get_modules_from_weekday(
             raise RuntimeError("Could not match TimeSlot to Cell Area")
         end_seconds = timeslot.end_seconds()
         modules.append(
-            RawExtractedModule(weekday, start_seconds, end_seconds, text, page_number)
+            RawExtractedModule(
+                weekday=weekday,
+                start_seconds=start_seconds,
+                end_seconds=end_seconds,
+                text=text,
+                source_page_number=page_number,
+            )
         )
     return modules
 
@@ -128,7 +137,7 @@ def extract_data_from_class_pdf(
             weekday_areas: dict[Weekday, Area] = {}
             timeslot_y_levels: dict[TimeSlot, YLevel] = {}
             for day in Weekday:
-                weekday_areas[day] = Area(0, 0, 0, 0)
+                weekday_areas[day] = Area(x1=0, y1=0, x2=0, y2=0)
 
             found_tables = page.find_tables(CLASS_PDF_TABLE_SETTINGS)
             logging.debug(
@@ -179,7 +188,7 @@ def extract_data_from_class_pdf(
                             if weekday_enum:
                                 logging.debug("Weekday %s found", cell_text)
                                 weekday_areas[weekday_enum] = Area(
-                                    cell[0], cell[3], cell[2], 0
+                                    x1=cell[0], y1=cell[3], x2=cell[2], y2=0
                                 )
                 else:
                     logging.debug("row: %d, col: %d", row_index, 0)
@@ -200,22 +209,26 @@ def extract_data_from_class_pdf(
                             )
                         else:
                             # assumes this is the last timeslot ever
-                            if target_timeslot == TimeSlot("20:30", "21:15"):
+                            if target_timeslot == TimeSlot(
+                                start_time="20:30", end_time="21:15"
+                            ):
                                 for weekday in Weekday:
                                     new_area = Area(
-                                        weekday_areas[weekday].x1,
-                                        weekday_areas[weekday].y1,
-                                        weekday_areas[weekday].x2,
-                                        cell[3],
+                                        x1=weekday_areas[weekday].x1,
+                                        y1=weekday_areas[weekday].y1,
+                                        x2=weekday_areas[weekday].x2,
+                                        y2=cell[3],
                                     )
                                     weekday_areas[weekday] = new_area
                             timeslot_y_levels[target_timeslot] = YLevel(
-                                cell[1], cell[3]
+                                y1=cell[1], y2=cell[3]
                             )
                             expected_timeslot_index += 1
 
             for weekday in Weekday:
-                unmerged_time_entries_by_weekday[weekday] = UnmergedTimeEntries([], [])
+                unmerged_time_entries_by_weekday[weekday] = UnmergedTimeEntries(
+                    cells=[], horizontal_lines=[]
+                )
                 target_area = weekday_areas[weekday]
                 logging.debug("target_area: %s", target_area)
 
@@ -234,7 +247,9 @@ def extract_data_from_class_pdf(
                         ):
                             cell_dimensions = cell[0], cell[1], cell[2], cell[3]
                             unmerged_time_entries_by_weekday[weekday].cells.append(
-                                Area(*cell_dimensions)
+                                Area(
+                                    x1=cell[0], y1=cell[1], x2=cell[2], y2=cell[3]
+                                )
                             )
                             logging.debug("%s cell found", weekday)
 
@@ -254,7 +269,7 @@ def extract_data_from_class_pdf(
                         unmerged_time_entries_by_weekday[
                             weekday
                         ].horizontal_lines.append(
-                            HorizontalLine(line_x1, line_x2, line_bottom)
+                            HorizontalLine(x1=line_x1, x2=line_x2, y=line_bottom)
                         )
 
             all_modules: list[RawExtractedModule] = []
@@ -273,7 +288,9 @@ def extract_data_from_class_pdf(
             )
             previous_page_metadata.append(page_metadata)
             extraction_data.append(
-                ClassPdfExtractionPageData(all_modules, page_metadata)
+                ClassPdfExtractionPageData(
+                    raw_extracted_modules=all_modules, page_metadata=page_metadata
+                )
             )
         return extraction_data
 

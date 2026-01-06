@@ -1,31 +1,26 @@
 from enum import Enum, unique
-from dataclasses import dataclass
-from typing import Annotated
+from typing import Annotated, Any
 
-from pydantic import BaseModel, PlainSerializer, Field, ConfigDict
+from pydantic import BaseModel, PlainSerializer, Field, ConfigDict, BeforeValidator
 
 
-@dataclass
-class XLevel:
+class XLevel(BaseModel):
     x1: float
     x2: float
 
 
-@dataclass
-class YLevel:
+class YLevel(BaseModel):
     y1: float
     y2: float
 
 
-@dataclass
-class HorizontalLine:
+class HorizontalLine(BaseModel):
     x1: float
     x2: float
     y: float
 
 
-@dataclass
-class Area:
+class Area(BaseModel):
     x1: float
     y1: float
     x2: float
@@ -53,27 +48,24 @@ class SemesterType(Enum):
     FS = "Frühlingssemester"
 
 
-@dataclass(frozen=True)
-class Semester:
+class Semester(BaseModel):
+    model_config = ConfigDict(frozen=True)
     yyyy: int
     semester_type: SemesterType
 
 
-@dataclass
-class Date:
+class Date(BaseModel):
     yyyy: int
     mm: int
     dd: int
 
 
-@dataclass
-class Time:
+class Time(BaseModel):
     hh: int
     mm: int
 
 
-@dataclass
-class ExportTimestamp:
+class ExportTimestamp(BaseModel):
     date: Date
     time: Time
 
@@ -96,22 +88,20 @@ class DegreeProgram(Enum):
     AGNOSTIC = "SG-???"
 
 
-@dataclass
-class PageMetadata:
+class PageMetadata(BaseModel):
     semester: Semester
     export_timestamp: ExportTimestamp
     class_name: str
     degree_program: DegreeProgram
 
 
-@dataclass
-class UnmergedTimeEntries:
+class UnmergedTimeEntries(BaseModel):
     cells: list[Area]
     horizontal_lines: list[HorizontalLine]
 
 
-@dataclass(frozen=True)
-class TimeSlot:
+class TimeSlot(BaseModel):
+    model_config = ConfigDict(frozen=True)
     start_time: str
     end_time: str
 
@@ -124,9 +114,18 @@ class TimeSlot:
         return hours * 3600 + minutes * 60
 
 
-@dataclass
-class RawExtractedModule:
-    weekday: Weekday
+def to_tuple_if_list(v: Any) -> Any:
+    if isinstance(v, list):
+        return tuple(v)
+    return v
+
+
+# needed for pydantic to correctly parse the custom Weekday Enum
+TolerantWeekday = Annotated[Weekday, BeforeValidator(to_tuple_if_list)]
+
+
+class RawExtractedModule(BaseModel):
+    weekday: TolerantWeekday
     start_seconds: int
     end_seconds: int
     text: str
@@ -141,8 +140,7 @@ class TeachingType(Enum):
     BLOCK = "blockmodule"
 
 
-@dataclass
-class RawLecturer:
+class RawLecturer(BaseModel):
     """
     Basic representation of an extracted lecturer from a pdf that needs to be parsed.
     """
@@ -166,8 +164,7 @@ class Lecturer(BaseModel):
 CustomWeekday = Annotated[Weekday, PlainSerializer(lambda v: v.index, return_type=int)]
 
 
-@dataclass
-class ParsedModuleCellTextData:
+class ParsedModuleCellTextData(BaseModel):
     module_shorthand: str
     degree_program: DegreeProgram
     class_name: str
@@ -193,13 +190,11 @@ class ClassJsonModule(BaseModel):
     lecturer_shorthands: list[str] = Field(..., alias="teachers")
 
 
-@dataclass
-class ClassPdfExtractionPageData:
+class ClassPdfExtractionPageData(BaseModel):
     raw_extracted_modules: list[RawExtractedModule]
     page_metadata: PageMetadata
 
 
-@dataclass
-class StartsWithMatch:
+class StartsWithMatch(BaseModel):
     shorthand_found: str
     num_of_matches: int
