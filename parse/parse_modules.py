@@ -25,14 +25,18 @@ def get_modules_for_class_json(
     valid_lecturer_shorthands: list[str] | None = None,
 ) -> list[ClassJsonModule]:
     """
-    Parses the Raw Extracted Modules from the class pdf into the format to
+    Parses the Raw Extracted Modules from the Class Timetable PDF into the format to
     export them to the classes.json file.
     """
     output_modules: list[ClassJsonModule] = []
 
     for input_module in modules:
         parsed_data: ParsedModuleCellTextData = parse_module_class_pdf_cell_text(
-            input_module.text, class_name, degree_program, all_class_names, valid_lecturer_shorthands
+            input_module.text,
+            class_name,
+            degree_program,
+            all_class_names,
+            valid_lecturer_shorthands,
         )
 
         output_modules.append(
@@ -47,7 +51,7 @@ def get_modules_for_class_json(
                 pages=[input_module.source_page_number],
                 part_of_other_classes=parsed_data.part_of_other_classes,
                 teaching_type=parsed_data.teaching_type,
-                lecturer_shorthands=parsed_data.lecturer_shortnames,  # pyright: ignore
+                lecturer_shorthands=parsed_data.lecturer_shorthands,  # pyright: ignore
                 id=get_id(
                     class_name,
                     parsed_data.module_shorthand,
@@ -103,7 +107,7 @@ def parse_module_class_pdf_cell_text(
     valid_lecturer_shorthands: list[str] | None = None,
 ) -> ParsedModuleCellTextData:
     """
-    Parse a single class pdf module cell text.
+    Parse a single Class Timetable PDF module cell text.
     """
     lines = text.split("\n")
     logging.debug("Parsing module cell text: \n%s", text)
@@ -125,17 +129,17 @@ def parse_module_class_pdf_cell_text(
         rooms=rooms,
         part_of_other_classes=[],
         teaching_type=teaching_type,
-        lecturer_shortnames=get_lecturer_shortnames(
+        lecturer_shorthands=get_lecturer_shorthands(
             lines[1], valid_lecturer_shorthands
         ),
     )
 
 
-def get_lecturer_shortnames(
+def get_lecturer_shorthands(
     second_line: str, valid_lecturer_shorthands: list[str] | None = None
 ) -> list[str]:
     """
-    Get the lecturer shorthand based on the second class pdf cell line.
+    Get the Lecturer Shorthand based on the second Class Timetable PDF cell line.
     You can provide a list of valid lecturer shorthands for more accurate parsing.
     """
     lecturer_shorthands: list[str] = []
@@ -145,7 +149,7 @@ def get_lecturer_shortnames(
             if len(word) == LECTURER_SHORTHAND_SIZE:
                 lecturer_shorthands.append(word)
             else:
-                logging.warning("Could not get lecturer shorthand from word: %s", word)
+                logging.warning("Could not get Lecturer Shorthand from word: %s", word)
     else:
         for word in words:
             exact_starts_with_match = matches_startswith(
@@ -164,7 +168,7 @@ def get_lecturer_shortnames(
                     minus_last_char_starts_with_match.shorthand_found
                 )
             else:
-                logging.warning("Could not get lecturer shorthand from word: %s", word)
+                logging.warning("Could not get Lecturer Shorthand from word: %s", word)
     return lecturer_shorthands
 
 
@@ -194,11 +198,11 @@ def get_module_shorthand(
     first_line: str, class_name: str, all_class_names: list[str]
 ) -> str:
     """
-    Get the module shorthand based on the first class pdf cell line.
+    Get the Module Shorthand based on the first Class Timetable PDF cell line.
     """
     words = first_line.split(" ")
     if len(words) < 1:
-        raise RuntimeError("Cannot extract module shorthand")
+        raise RuntimeError("Cannot extract Module Shorthand")
     word = words[0]
     if len(words) == 1:
         for i in reversed(range(len(class_name) + 1)):
@@ -222,7 +226,7 @@ def get_module_shorthand(
                 )
                 break
     if len(word) == 0:
-        raise RuntimeError("Module shorthand cannot be empty")
+        raise RuntimeError("Module Shorthand cannot be empty")
     return word
 
 
@@ -241,7 +245,7 @@ def get_id(
 
 def get_teaching_type(third_line: str) -> TeachingType:
     """
-    Get the teaching type based on the third class pdf cell line.
+    Get the teaching type based on the third Class Timetable PDF cell line.
     """
     if "Online" in third_line:
         return TeachingType.ONLINE
@@ -250,7 +254,7 @@ def get_teaching_type(third_line: str) -> TeachingType:
 
 def get_rooms(third_line: str) -> list[str]:
     """
-    Get the rooms based on the third class pdf cell line.
+    Get the rooms based on the third Class Timetable PDF cell line.
     """
     if "DSMixe" in third_line:
         return []
@@ -264,3 +268,4 @@ def get_classes(extraction_data: list[ClassPdfExtractionPageData]) -> list[str]:
     Get the classes from the class page's metadata.
     """
     return [page_data.page_metadata.class_name for page_data in extraction_data]
+

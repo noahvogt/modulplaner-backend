@@ -40,12 +40,15 @@ def get_valid_lecturers(file_path: str) -> list[str]:
 
 
 def main() -> None:
-    parser = ArgumentParser(description="Parse class PDF to JSON.")
+    parser = ArgumentParser(description="Parse Class Timetable PDF to JSON.")
     parser.add_argument(
         "-l", "--lecturers", help="Path to the lecturers.json file", default=None
     )
     parser.add_argument(
-        "-i", "--input", help="Path to the input PDF file", default=CLASS_PDF_INPUT_FILE
+        "-i",
+        "--input",
+        help="Path to the input Class Timetable PDF file",
+        default=CLASS_PDF_INPUT_FILE,
     )
     parser.add_argument(
         "-o",

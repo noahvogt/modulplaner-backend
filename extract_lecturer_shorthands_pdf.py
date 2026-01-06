@@ -70,7 +70,7 @@ def extract_rows_from_lecturer_shorthand_pdf(input_file) -> list[RawLecturer]:
 
             if len(found_tables) != 1:
                 raise RuntimeError(
-                    "Did not find exactly 1 table in the lecuturer shorthands pdf"
+                    "Did not find exactly 1 table in the Lecturer Shorthands PDF"
                     + f" on page {page_index + 1}"
                 )
 
@@ -162,11 +162,11 @@ def parse_lecturers(raw_lecturers: list[RawLecturer]) -> list[Lecturer]:
 
 
 def main() -> None:
-    parser = ArgumentParser(description="Parse lecturer shorthand PDF to JSON.")
+    parser = ArgumentParser(description="Parse Lecturer Shorthands PDF to JSON.")
     parser.add_argument(
         "-i",
         "--input",
-        help="Path to the input PDF file",
+        help="Path to the input Lecturer Shorthands PDF file",
         default=LECTURER_SHORTHAND_PDF_PDF_INPUT_FILE,
     )
     parser.add_argument(

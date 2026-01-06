@@ -171,7 +171,7 @@ class ParsedModuleCellTextData(BaseModel):
     rooms: list[str]
     part_of_other_classes: list[str]
     teaching_type: TeachingType
-    lecturer_shortnames: list[str]
+    lecturer_shorthands: list[str]
 
 
 class ClassJsonModule(BaseModel):

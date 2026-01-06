@@ -16,6 +16,20 @@ For some simple commands mentioned in this documentat, It is also recommended to
 - [jq](https://github.com/jqlang/jq)
 - a working POSIX shell environment
 
+## Terminology
+
+This project uses specific domain terms that map to the data sources and the generated JSON structure:
+
+- **Class Timetable PDF**: The primary source file (e.g., `klassen.pdf`) containing the weekly schedule.
+- **Lecturer Shorthands PDF**: A source file mapping Lecturer abbreviations (shorthands) to their full names.
+- **Lecturers Timetable PDF**: A secondary source file, similar to the Class Timetable PDF, but grouped by Lecturer (typically one page per Lecturer) instead of by class.
+- **Module**: A formally defined course unit within the curriculum that has specified learning objectives and contents. Every Module has an official shorthand, an official ID, a webpage, and provides a specific amount of ECTS credits. A Module may be offered multiple times and in different formats. Students cannot enroll in a Module directly.
+- **Module Run**: A specific delivery of a Module in a given period (e.g., semester or academic year) where students can enroll. Different runs of the same Module may vary in schedule, Lecturers, or location, while sharing the same course unit. Students can enroll in Module Runs.
+- **Module Shorthand**: The official abbreviation for a Module.
+- **Class**: A grouping used to uniquely identify specific Module Runs. Students do not have to enroll in every Module Run of a Class; they are usually part of multiple Classes as they enroll in distinct Module Runs that are part of various Classes.
+- **Lecturer**: A teacher who instructs a specific Module Run.
+- **Lecturer Shorthand**: An abbreviation for a Lecturer. Since there are multiple abbreviations found in the source data for the same Lecturer, they cannot be used to uniquely identify Lecturers.
+
 ## Basic Usage
 
 This section is split into the different script provided by this repository.
