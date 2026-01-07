@@ -15,7 +15,7 @@ from parse import (
     ClassJsonModule,
 )
 
-from config import CLASS_PDF_INPUT_FILE, CLASSES_JSON_OUTPUT_FILE
+from config import CLASS_TIMETABLE_PDF_INPUT_FILE, CLASSES_JSON_OUTPUT_FILE
 
 
 def get_valid_lecturers(file_path: str) -> list[str]:
@@ -42,13 +42,16 @@ def get_valid_lecturers(file_path: str) -> list[str]:
 def main() -> None:
     parser = ArgumentParser(description="Parse Class Timetable PDF to JSON.")
     parser.add_argument(
-        "-l", "--lecturers", help="Path to the lecturers.json file", default=None
+        "-l",
+        "--lecturers",
+        help="Path to the lecturers.json file (Optional)",
+        default=None,
     )
     parser.add_argument(
         "-i",
         "--input",
         help="Path to the input Class Timetable PDF file",
-        default=CLASS_PDF_INPUT_FILE,
+        default=CLASS_TIMETABLE_PDF_INPUT_FILE,
     )
     parser.add_argument(
         "-o",
@@ -66,11 +69,18 @@ def main() -> None:
         help="Path to load the intermediate extraction data from (JSON format) and skip extraction",
         default=None,
     )
+    parser.add_argument(
+        "-j",
+        "--jobs",
+        help="Number of parallel jobs to use for extraction (default: 1)",
+        type=int,
+        default=1,
+    )
 
     args = parser.parse_args()
     lecturers_file = args.lecturers
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.DEBUG)
 
     valid_lecturer_shorthands: list[str] | None = None
     if lecturers_file:
@@ -85,7 +95,7 @@ def main() -> None:
                 list[ClassPdfExtractionPageData]
             ).validate_json(f.read())
     else:
-        extraction_data = extract_data_from_class_pdf(args.input)
+        extraction_data = extract_data_from_class_pdf(args.input, num_of_jobs=args.jobs)
         if args.save_intermediate:
             logging.info("Saving intermediate data to %s", args.save_intermediate)
             with open(args.save_intermediate, "w", encoding="utf-8") as f:

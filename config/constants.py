@@ -1,13 +1,14 @@
-CLASS_PDF_INPUT_FILE = "klassen.pdf"
-CLASSES_JSON_OUTPUT_FILE = "classes.json"
-CLASS_PDF_TABLE_SETTINGS = {
+CLASS_TIMETABLE_PDF_INPUT_FILE = "klassen.pdf"
+CLASS_TIMETABLE_PDF_TABLE_SETTINGS = {
     "vertical_strategy": "lines",
     "horizontal_strategy": "lines",
     "snap_tolerance": 3,
     "join_tolerance": 3,
     "edge_min_length": 3,
 }
-CLASS_PDF_MIN_DIMENSIONS = 150
+CLASS_TIMETABLE_PDF_MIN_DIMENSIONS = 150
+
+CLASSES_JSON_OUTPUT_FILE = "classes.json"
 
 TOLERANCE = 3
 REQUESTS_TIMEOUT = 4

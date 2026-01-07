@@ -34,30 +34,22 @@ This project uses specific domain terms that map to the data sources and the gen
 
 This section is split into the different script provided by this repository.
 
-### parse_class_pdf.py
+### generate_classes_json.py
 
 Execute the following to parse a class timetable PDF into the `classes.json` file needed by the frontend.
 
 ```sh
-./parse_class_pdf.py [-h] [-l LECTURERS] [-i INPUT] [-o OUTPUT] [--save-intermediate SAVE_INTERMEDIATE] [--load-intermediate LOAD_INTERMEDIATE]
+./generate_classes_json.py -i klassen.pdf -o classes.json
 ```
 
-#### Arguments
-
-- `-i`, `--input`: Path to the input PDF file. Defaults to `klassen.pdf`.
-- `-o`, `--output`: Path to the output JSON file. Defaults to `classes.json`.
-- `-l`, `--lecturers`: Path to the `lecturers.json` file. If provided, it is used to validate lecturer shorthands during parsing.
-- `--save-intermediate`: Path to save the intermediate extraction data (JSON format) and exit. Useful for skipping the slow extraction stage in subsequent runs.
-- `--load-intermediate`: Path to load the intermediate extraction data from (JSON format) and skip extraction.
-
-The default values for input and output files are defined in `config/constants.py`.
+For more information, show the cli arguments via `./generate_classes_json.py -h`.
 
 #### Faster Development Cycle
 
 Since the PDF extraction takes a significant amount of time, you can split the process into two stages:
 
-1.  **Stage 1 (Extraction):** Run once and save the result: `./parse_class_pdf.py --save-intermediate data.pkl`
-2.  **Stage 2 (Parsing):** Load the saved data and iterate on the parsing logic: `./parse_class_pdf.py --load-intermediate data.pkl --output classes.json`
+1.  **Stage 1 (Extraction):** Run once and save the result: `./generate_classes_json.py --save-intermediate data.pkl`
+2.  **Stage 2 (Parsing):** Load the saved data and iterate on the parsing logic: `./generate_classes_json.py --load-intermediate data.pkl --output classes.json`
 
 ### extract_lecturer_shorthands_pdf.py
 

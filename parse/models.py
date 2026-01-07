@@ -194,6 +194,10 @@ class ClassPdfExtractionPageData(BaseModel):
     raw_extracted_modules: list[RawExtractedModule]
     page_metadata: PageMetadata
 
+class RawClassPdfExtractionPageData(BaseModel):
+    raw_extracted_modules: list[RawExtractedModule]
+    above_table_text: str
+
 
 class StartsWithMatch(BaseModel):
     shorthand_found: str
