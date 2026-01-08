@@ -268,4 +268,3 @@ def get_classes(extraction_data: list[ClassPdfExtractionPageData]) -> list[str]:
     Get the classes from the class page's metadata.
     """
     return [page_data.page_metadata.class_name for page_data in extraction_data]
-

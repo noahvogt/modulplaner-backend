@@ -1,7 +1,10 @@
 from enum import Enum, unique
 from typing import Annotated, Any
+from dataclasses import dataclass
 
 from pydantic import BaseModel, PlainSerializer, Field, ConfigDict, BeforeValidator
+from pdfplumber.page import Page
+from pdfplumber.table import Table
 
 
 class XLevel(BaseModel):
@@ -194,6 +197,7 @@ class ClassPdfExtractionPageData(BaseModel):
     raw_extracted_modules: list[RawExtractedModule]
     page_metadata: PageMetadata
 
+
 class RawClassPdfExtractionPageData(BaseModel):
     raw_extracted_modules: list[RawExtractedModule]
     above_table_text: str
@@ -202,3 +206,13 @@ class RawClassPdfExtractionPageData(BaseModel):
 class StartsWithMatch(BaseModel):
     shorthand_found: str
     num_of_matches: int
+
+
+@dataclass
+class TimeSlotYLevelsCollectionData:
+    row_index: int
+    page: Page
+    table: Table
+    expected_timeslot_index: int
+    last_timeslot: TimeSlot
+    weekday_areas: dict[Weekday, Area]

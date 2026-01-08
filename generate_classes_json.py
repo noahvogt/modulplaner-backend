@@ -80,7 +80,7 @@ def main() -> None:
     args = parser.parse_args()
     lecturers_file = args.lecturers
 
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(level=logging.INFO)
 
     valid_lecturer_shorthands: list[str] | None = None
     if lecturers_file:
