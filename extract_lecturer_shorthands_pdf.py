@@ -14,6 +14,8 @@ from config import (
 )
 from parse import RawLecturer, Lecturer
 
+logger = logging.getLogger("modulplaner-backend.extract_lecturer_shorthands_pdf")
+
 
 def extract_rows_from_lecturer_shorthand_pdf(input_file) -> list[RawLecturer]:
     lecturers: list[RawLecturer] = []
@@ -34,7 +36,7 @@ def extract_rows_from_lecturer_shorthand_pdf(input_file) -> list[RawLecturer]:
             # even if it drifts slightly left.
             sep_x_1 = nachname_rects[0]["x0"] - 2
             sep_x_2 = vorname_rects[0]["x0"] - 2
-            logging.debug(
+            logger.debug(
                 "calculated separators: %d (Nachname), %d (Vorname)", sep_x_1, sep_x_2
             )
         else:
@@ -57,7 +59,7 @@ def extract_rows_from_lecturer_shorthand_pdf(input_file) -> list[RawLecturer]:
 
             # guard against empty lines list if page has no lines
             if not lines_y1:
-                logging.warning("First page has no lines")
+                logger.warning("First page has no lines")
                 crop_box = (0, 0, page.width, page.height)
             else:
                 crop_box = (0, min_line_y1, page.width, max_line_y1)
@@ -78,7 +80,7 @@ def extract_rows_from_lecturer_shorthand_pdf(input_file) -> list[RawLecturer]:
 
             for row_index, row in enumerate(table.rows):
                 if row is None:
-                    logging.debug("None table row found")
+                    logger.debug("None table row found")
                     continue
 
                 valid_cells = [cell for cell in row.cells if cell is not None]
@@ -93,7 +95,7 @@ def extract_rows_from_lecturer_shorthand_pdf(input_file) -> list[RawLecturer]:
 
                 row_bbox = (row_left, row_top, row_right, row_bottom)
 
-                logging.debug("row %d dimensions: %s", row_index, row_bbox)
+                logger.debug("row %d dimensions: %s", row_index, row_bbox)
 
                 # column 1: From start of row -> Nachname separator
                 col1_bbox = (row_left, row_top, sep_x_1, row_bottom)
@@ -102,19 +104,23 @@ def extract_rows_from_lecturer_shorthand_pdf(input_file) -> list[RawLecturer]:
                 # column 3: From Vorname separator -> End of row
                 col3_bbox = (sep_x_2, row_top, row_right, row_bottom)
 
-                logging.debug("col 1 bbox: %s", col1_bbox)
-                logging.debug("col 2 bbox: %s", col2_bbox)
-                logging.debug("col 3 bbox: %s", col3_bbox)
+                logger.debug("col 1 bbox: %s", col1_bbox)
+                logger.debug("col 2 bbox: %s", col2_bbox)
+                logger.debug("col 3 bbox: %s", col3_bbox)
 
                 row_text: str = cropped_page.crop(row_bbox).extract_text()
-                logging.debug("row text: %s", row_text)
+                logger.debug("row text: %s", row_text)
                 col1_text = cropped_page.crop(col1_bbox).extract_text()
-                logging.debug("col 1 text: %s", col1_text)
+                logger.debug("col 1 text: %s", col1_text)
                 col2_text = cropped_page.crop(col2_bbox).extract_text()
-                logging.debug("col 2 text: %s", col2_text)
+                logger.debug("col 2 text: %s", col2_text)
                 col3_text = cropped_page.crop(col3_bbox).extract_text()
-                logging.debug("col 3 text: %s", col3_text)
-                lecturers.append(RawLecturer(col1_text, col3_text, col2_text))
+                logger.debug("col 3 text: %s", col3_text)
+                lecturers.append(
+                    RawLecturer(
+                        shorthand=col1_text, firstname=col3_text, surname=col2_text
+                    )
+                )
 
     return lecturers
 
@@ -147,7 +153,7 @@ def parse_lecturers(raw_lecturers: list[RawLecturer]) -> list[Lecturer]:
     lecturers: list[Lecturer] = []
     for raw_lecturer in raw_lecturers:
         if is_table_header_row(raw_lecturer) or is_vak_example_row(raw_lecturer):
-            logging.debug("skipping raw lecturer: %s", raw_lecturer)
+            logger.debug("skipping raw lecturer: %s", raw_lecturer)
         else:
             new_lecturer: Lecturer = Lecturer(
                 short=raw_lecturer.shorthand,
@@ -155,7 +161,7 @@ def parse_lecturers(raw_lecturers: list[RawLecturer]) -> list[Lecturer]:
                 firstname=raw_lecturer.firstname,
             )
             if new_lecturer in lecturers:
-                logging.debug("skipped over duplicate lecturer: %s", new_lecturer)
+                logger.debug("skipped over duplicate lecturer: %s", new_lecturer)
             else:
                 lecturers.append(new_lecturer)
     return lecturers
@@ -175,9 +181,16 @@ def main() -> None:
         help="Path to the output JSON file",
         default=LECTURER_SHORTHAND_JSON_OUTPUT_FILE,
     )
+    parser.add_argument(
+        "--log-level",
+        help="Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+        default="INFO",
+        type=str.upper,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+    )
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=args.log_level)
 
     raw_lecturers: list[RawLecturer] = extract_rows_from_lecturer_shorthand_pdf(
         args.input

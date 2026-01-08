@@ -17,6 +17,8 @@ from parse import (
 
 from config import CLASS_TIMETABLE_PDF_INPUT_FILE, CLASSES_JSON_OUTPUT_FILE
 
+logger = logging.getLogger("modulplaner-backend")
+
 
 def get_valid_lecturers(file_path: str) -> list[str]:
     """
@@ -24,18 +26,18 @@ def get_valid_lecturers(file_path: str) -> list[str]:
     """
     valid_lecturers: list[str] = []
     try:
-        logging.warning("reading lecturers file: '%s'", file_path)
+        logger.warning("reading lecturers file: '%s'", file_path)
         with open(file_path, "r", encoding="utf-8") as f:
             data = json.load(f)
             if isinstance(data, list):
                 for entry in data:
                     if isinstance(entry, dict) and "short" in entry:
                         valid_lecturers.append(entry["short"])
-        logging.info(
+        logger.info(
             "Loaded %d valid lecturers from %s", len(valid_lecturers), file_path
         )
     except Exception as e:
-        logging.error("Failed to load valid lecturers from '%s': %s", file_path, e)
+        logger.error("Failed to load valid lecturers from '%s': %s", file_path, e)
     return valid_lecturers
 
 
@@ -76,11 +78,18 @@ def main() -> None:
         type=int,
         default=1,
     )
+    parser.add_argument(
+        "--log-level",
+        help="Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+        default="INFO",
+        type=str.upper,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+    )
 
     args = parser.parse_args()
     lecturers_file = args.lecturers
 
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=args.log_level)
 
     valid_lecturer_shorthands: list[str] | None = None
     if lecturers_file:
@@ -89,7 +98,7 @@ def main() -> None:
     extraction_data: list[ClassPdfExtractionPageData]
 
     if args.load_intermediate:
-        logging.info("Loading intermediate data from %s", args.load_intermediate)
+        logger.info("Loading intermediate data from %s", args.load_intermediate)
         with open(args.load_intermediate, "r", encoding="utf-8") as f:
             extraction_data = TypeAdapter(
                 list[ClassPdfExtractionPageData]
@@ -97,7 +106,7 @@ def main() -> None:
     else:
         extraction_data = extract_data_from_class_pdf(args.input, num_of_jobs=args.jobs)
         if args.save_intermediate:
-            logging.info("Saving intermediate data to %s", args.save_intermediate)
+            logger.info("Saving intermediate data to %s", args.save_intermediate)
             with open(args.save_intermediate, "w", encoding="utf-8") as f:
                 f.write(
                     TypeAdapter(list[ClassPdfExtractionPageData])

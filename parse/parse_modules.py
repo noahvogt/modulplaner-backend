@@ -1,5 +1,5 @@
-from typing import List
 import logging
+from typing import List
 
 from pydantic import TypeAdapter
 
@@ -15,6 +15,8 @@ from .models import (
     StartsWithMatch,
     ClassPdfExtractionPageData,
 )
+
+logger = logging.getLogger("modulplaner-backend.parse_modules")
 
 
 def get_modules_for_class_json(
@@ -110,7 +112,7 @@ def parse_module_class_pdf_cell_text(
     Parse a single Class Timetable PDF module cell text.
     """
     lines = text.split("\n")
-    logging.debug("Parsing module cell text: \n%s", text)
+    logger.debug("Parsing module cell text: \n%s", text)
     if len(lines) != 3 and len(lines) != 2:
         raise RuntimeError("Invalid Number of Lines in the cell text.")
     if len(lines) == 3:
@@ -149,7 +151,7 @@ def get_lecturer_shorthands(
             if len(word) == LECTURER_SHORTHAND_SIZE:
                 lecturer_shorthands.append(word)
             else:
-                logging.warning("Could not get Lecturer Shorthand from word: %s", word)
+                logger.warning("Could not get Lecturer Shorthand from word: %s", word)
     else:
         for word in words:
             exact_starts_with_match = matches_startswith(
@@ -168,7 +170,7 @@ def get_lecturer_shorthands(
                     minus_last_char_starts_with_match.shorthand_found
                 )
             else:
-                logging.warning("Could not get Lecturer Shorthand from word: %s", word)
+                logger.warning("Could not get Lecturer Shorthand from word: %s", word)
     return lecturer_shorthands
 
 
@@ -213,13 +215,13 @@ def get_module_shorthand(
                     f"cut off class name part '{class_name_part}'"
                     + f" of class name '{class_name}' in line '{first_line}'"
                 )
-                logging.debug(debug_msg)
+                logger.debug(debug_msg)
                 break
 
         for foreign_class_name in all_class_names:
             if word.endswith(foreign_class_name):
                 word = word[: word.rfind(foreign_class_name)]
-                logging.debug(
+                logger.debug(
                     "cut off class name '%s' in line '%s'",
                     foreign_class_name,
                     first_line,

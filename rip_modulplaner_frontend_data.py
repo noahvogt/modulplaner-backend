@@ -17,6 +17,8 @@ from config import (
     REQUESTS_TIMEOUT,
 )
 
+logger = logging.getLogger("modulplaner-backend.rip_frontend_data")
+
 
 def download_file(url: str, local_path: Path) -> bool:
     """
@@ -30,16 +32,16 @@ def download_file(url: str, local_path: Path) -> bool:
 
         with open(local_path, "wb") as f:
             f.write(response.content)
-        logging.info("Downloaded: %s", local_path)
+        logger.info("Downloaded: %s", local_path)
         return True
     except requests.exceptions.HTTPError as e:
         if e.response.status_code == 404:
-            logging.warning("File not found (404): %s", url)
+            logger.warning("File not found (403): %s", url)
         else:
-            logging.error("Failed to download %s: %s", url, e)
+            logger.error("Failed to download %s: %s", url, e)
         return False
     except Exception as e:
-        logging.error("Error downloading %s: %s", url, e)
+        logger.error("Error downloading %s: %s", url, e)
         return False
 
 
@@ -49,12 +51,12 @@ def get_semester_versions(
     """
     Downloads and parses the semester-versions.json file.
     """
-    logging.info("Fetching semester list...")
+    logger.info("Fetching semester list...")
     if not download_file(
         f"{base_url}/{FRONTEND_RIPPER_SEMESTER_VERSIONS_FILE}",
         output_dir / FRONTEND_RIPPER_SEMESTER_VERSIONS_FILE,
     ):
-        logging.error("Could not download semester-versions.json. Exiting.")
+        logger.error("Could not download semester-versions.json. Exiting.")
         return None
 
     try:
@@ -63,7 +65,7 @@ def get_semester_versions(
         ) as f:
             return json.load(f)
     except json.JSONDecodeError:
-        logging.error("Error parsing semester-versions.json")
+        logger.error("Error parsing semester-versions.json")
         return None
 
 
@@ -71,7 +73,7 @@ def process_semester(semester: str, base_url: str, output_dir: Path) -> None:
     """
     Downloads files associated with a specific semester.
     """
-    logging.info("Processing Semester: %s", semester)
+    logger.info("Processing Semester: %s", semester)
 
     semester_level_files = ["blockclasses.json", "config.json"]
     for s_file in semester_level_files:
@@ -89,7 +91,7 @@ def process_semester(semester: str, base_url: str, output_dir: Path) -> None:
                         output_dir / semester / blockclass_file,
                     )
         except (json.JSONDecodeError, OSError) as e:
-            logging.error("Error reading config.json for %s: %s", semester, e)
+            logger.error("Error reading config.json for %s: %s", semester, e)
 
 
 def process_version(
@@ -121,9 +123,16 @@ def main():
         help="Output directory for downloaded files",
         default=FRONTEND_RIPPER_OUTPUT_DIR_DEFAULT,
     )
+    parser.add_argument(
+        "--log-level",
+        help="Set the logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)",
+        default="INFO",
+        type=str.upper,
+        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+    )
     args = parser.parse_args()
 
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
+    logging.basicConfig(level=args.log_level)
 
     base_url = args.base_url
     output_dir = Path(args.output_dir)

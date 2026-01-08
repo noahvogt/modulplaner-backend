@@ -5,6 +5,8 @@ from pdfplumber.page import Page
 
 from .models import Area
 
+logger = logging.getLogger("modulplaner-backend.img")
+
 
 def is_mostly_white_area(page: Page, area: Area) -> bool:
     """
@@ -31,6 +33,6 @@ def is_mostly_white_area(page: Page, area: Area) -> bool:
 
     total_pixels = arr.shape[0] * arr.shape[1]
     whitish_percentage = is_whitish.sum() / total_pixels
-    logging.debug("whitish: %.2f%%", whitish_percentage * 100)
+    logger.debug("whitish: %.2f%%", whitish_percentage * 100)
 
     return whitish_percentage > 0.9

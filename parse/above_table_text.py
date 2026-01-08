@@ -11,6 +11,8 @@ from .models import (
     Time,
 )
 
+logger = logging.getLogger("modulplaner-backend.above_table_text")
+
 
 def parse_above_table_text(
     txt: str, previous_page_metadata: list[PageMetadata]
@@ -76,13 +78,13 @@ def get_class_name(third_line: str) -> str:
 def get_degree_program(
     third_line: str, class_name: str, previous_page_metadata: list[PageMetadata]
 ) -> DegreeProgram:
-    logging.debug("class_name: '%s'", class_name)
+    logger.debug("class_name: '%s'", class_name)
     if "Kontext BWL" and "Kommunikation" and "GSW" in third_line:
         return DegreeProgram.MIXED_BWL_GSW_KOMM
     for degree_program in DegreeProgram:
         if degree_program.value in third_line:
             return degree_program
-    logging.warning("Using heuristics to guess the degree_program in %s", third_line)
+    logger.warning("Using heuristics to guess the degree_program in %s", third_line)
     try:
         for page_metadata in previous_page_metadata:
             if page_metadata.class_name == class_name[:-1]:

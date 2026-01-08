@@ -2,9 +2,9 @@ import logging
 from multiprocessing import Pool
 from pathlib import Path
 
+import pdfplumber
 from pdfplumber.page import Page
 from pdfplumber.table import Table
-import pdfplumber
 
 from config import (
     CLASS_TIMETABLE_PDF_TABLE_SETTINGS,
@@ -32,6 +32,9 @@ from .geometry import (
     is_vertical_match,
 )
 from .img import is_mostly_white_area
+
+logger = logging.getLogger("modulplaner-backend.table_extraction")
+
 
 allowed_time_slots: list[TimeSlot] = [
     TimeSlot(start_time=timeslot_tuple[0], end_time=timeslot_tuple[1])
@@ -75,7 +78,7 @@ def merge_vertically_spanning_cells(
     current_area = initial_area
 
     while True:
-        logging.debug(
+        logger.debug(
             "Searching for bottom boundary of area: %s on %s", current_area, weekday
         )
 
@@ -84,12 +87,12 @@ def merge_vertically_spanning_cells(
             is_line_at_bottom(current_area, line, tolerance=20)
             for line in horizontal_lines
         ):
-            logging.debug("Bottom boundary found: horizontal line")
+            logger.debug("Bottom boundary found: horizontal line")
             return current_area
 
         # case 2: reached the bottom of the timetable?
         if is_vertical_match(current_area.y2, highest_y):
-            logging.debug("Bottom boundary found: highest y level")
+            logger.debug("Bottom boundary found: highest y level")
             return current_area
 
         # case 3: find and merge with the next cell below
@@ -100,7 +103,7 @@ def merge_vertically_spanning_cells(
             )
 
         next_cell = remaining_cells.pop(next_cell_index)
-        logging.debug("Vertically merging with cell below: %s", next_cell)
+        logger.debug("Vertically merging with cell below: %s", next_cell)
 
         current_area = Area(
             x1=current_area.x1,
@@ -129,7 +132,7 @@ def get_modules_from_weekday(
         initial_area = cells.pop(0)
 
         if is_mostly_white_area(page, initial_area):
-            logging.debug("mostly white cell skipped")
+            logger.debug("mostly white cell skipped")
             continue
 
         merged_area: Area = merge_vertically_spanning_cells(
@@ -178,7 +181,7 @@ def get_highest_y_level(timeslot_y_levels, page_number) -> float:
     try:
         highest_y_level = timeslot_y_levels[allowed_time_slots[-1]].y2
     except KeyError as e:
-        logging.debug("timeslot_y_levels on page %d %s", page_number, timeslot_y_levels)
+        logger.debug("timeslot_y_levels on page %d %s", page_number, timeslot_y_levels)
         raise RuntimeError("Could not get YLevel for latest TimeSlot") from e
     return highest_y_level
 
@@ -198,7 +201,7 @@ def get_usable_table_index(found_tables: list) -> int:
         x0, top, x1, bottom = table.bbox
         width = x1 - x0
         height = bottom - top
-        logging.debug(
+        logger.debug(
             "table num %d: width: %d, height: %d",
             index + 1,
             width,
@@ -301,11 +304,11 @@ def collect_timeslot_y_levels_of_row(
     Returns:
         int for the current expected `TimeSlot` index
     """
-    logging.debug("row: %d, col: %d", collection_data.row_index, 0)
+    logger.debug("row: %d, col: %d", collection_data.row_index, 0)
     row = collection_data.table.rows[collection_data.row_index]
     cell = row.cells[0]
     if cell is None:
-        logging.warning("None Table cell found, not collecting YLevel of Row")
+        logger.warning("None Table cell found, not collecting YLevel of Row")
         return collection_data.expected_timeslot_index
     cell_text = collection_data.page.crop(
         (cell[0], cell[1], cell[2], cell[3])
@@ -315,7 +318,7 @@ def collect_timeslot_y_levels_of_row(
         target_timeslot.start_time in cell_text
         and target_timeslot.end_time in cell_text
     ):
-        logging.warning("Unexpected TimeSlot found: '%s'", cell_text)
+        logger.warning("Unexpected TimeSlot found: '%s'", cell_text)
         return collection_data.expected_timeslot_index
     if target_timeslot == collection_data.last_timeslot:
         for weekday in Weekday:
@@ -337,19 +340,19 @@ def collect_weekday_areas(weekday_areas, page, row, row_index) -> None:
     """
     empty_start_found = False
     for column_index, cell in enumerate(row.cells):
-        logging.debug("row: %d, col: %d", row_index, column_index)
-        logging.debug(cell)
+        logger.debug("row: %d, col: %d", row_index, column_index)
+        logger.debug(cell)
         if cell is None:
-            logging.debug("None Table Cell Found")
+            logger.debug("None Table Cell Found")
         else:
             cell_text = page.crop((cell[0], cell[1], cell[2], cell[3])).extract_text()
             if not empty_start_found and len(cell_text) == 0:
-                logging.debug("empty start found")
+                logger.debug("empty start found")
                 empty_start_found = True
 
             weekday_enum: Weekday | None = get_weekday_from_text(cell_text)
             if weekday_enum:
-                logging.debug("Weekday %s found", cell_text)
+                logger.debug("Weekday %s found", cell_text)
                 weekday_areas[weekday_enum] = Area(
                     x1=cell[0], y1=cell[3], x2=cell[2], y2=0
                 )
@@ -362,7 +365,7 @@ def get_last_timeslot(time_slots: list[TimeSlot]) -> TimeSlot:
     if len(time_slots) == 0:
         raise RuntimeError("Cannot get the latest timeslot from an empty list")
     last_timeslot = time_slots[-1]
-    logging.debug("last timeslot found: %s", last_timeslot)
+    logger.debug("last timeslot found: %s", last_timeslot)
 
     return last_timeslot
 
@@ -382,7 +385,7 @@ def select_main_table(page: Page, page_index: int) -> Table:
     Selects the main table on the PDF Page. This should be the timetable.
     """
     found_tables = page.find_tables(CLASS_TIMETABLE_PDF_TABLE_SETTINGS)
-    logging.debug(
+    logger.debug(
         "amount of tables found on page %d: %d",
         page_index + 1,
         len(found_tables),
@@ -406,15 +409,15 @@ def collected_unmerged_time_entries_by_weekday(
             cells=[], horizontal_lines=[]
         )
         target_area: Area = weekday_areas[weekday]
-        logging.debug("target_area: %s", target_area)
+        logger.debug("target_area: %s", target_area)
 
         for row_index, row in enumerate(table.rows):
             for column_index, cell in enumerate(row.cells):
                 if cell is None:
-                    logging.debug("None table cell found")
+                    logger.debug("None table cell found")
                     continue
-                logging.debug("row: %d, col: %d", row_index, column_index)
-                logging.debug("cell: %s", cell)
+                logger.debug("row: %d, col: %d", row_index, column_index)
+                logger.debug("cell: %s", cell)
                 if (
                     target_area.x1 <= cell[0]
                     and target_area.y1 <= cell[1]
@@ -424,7 +427,7 @@ def collected_unmerged_time_entries_by_weekday(
                     unmerged_time_entries_by_weekday[weekday].cells.append(
                         Area(x1=cell[0], y1=cell[1], x2=cell[2], y2=cell[3])
                     )
-                    logging.debug("%s cell found", weekday)
+                    logger.debug("%s cell found", weekday)
 
         collect_horizontal_lines(
             unmerged_time_entries_by_weekday, page, target_area, weekday
@@ -454,7 +457,7 @@ def collect_horizontal_lines(
             continue
 
         if target_area.x1 <= line_x1 and target_area.x2 >= line_x2:
-            logging.debug("%s timeslot seperator line found", weekday)
+            logger.debug("%s timeslot seperator line found", weekday)
             unmerged_time_entries_by_weekday[weekday].horizontal_lines.append(
                 HorizontalLine(x1=line_x1, x2=line_x2, y=line_bottom)
             )
@@ -467,10 +470,10 @@ def extract_data_from_class_pdf(
     Extracts all data from the specified Class Timetable PDF filename.
     Can run via multiple jobs.
     """
-    logging.info("Starting extraction with %d jobs", num_of_jobs)
+    logger.info("Starting extraction with %d jobs", num_of_jobs)
 
     num_pages: int = get_number_of_pdf_pages(input_filename)
-    logging.info("Found %d pages to process", num_pages)
+    logger.info("Found %d pages to process", num_pages)
 
     processed_pages: list[RawClassPdfExtractionPageData] = process_pages_in_parallel(
         num_of_jobs, input_filename, num_pages
@@ -531,7 +534,7 @@ def get_above_table_text(page: Page, table_y1: float) -> str:
     upper_region = page.crop((0, 0, page.width, table_y1))
     text_above_table = upper_region.extract_text()
 
-    logging.debug("Text found above the table:")
-    logging.debug(text_above_table)
+    logger.debug("Text found above the table:")
+    logger.debug(text_above_table)
 
     return text_above_table
