@@ -1,8 +1,20 @@
 # modulplaner-backend
 
-Provides backend tooling for [modulplaner](https://codeberg.org/Modulplaner/modulplaner).
+Provides backend tooling for [modulplaner-frontend](https://codeberg.org/Modulplaner/modulplaner) (archived at [#1](https://github.com/noahvogt/modulplaner-frontend) [#2](https://git.noahvogt.com/noah/modulplaner-frontend)).
 
-Because the original repo only contains frontend code and data updates were slow and intransparent, I created this repo as a solution.
+Because the original repo only contains frontend code and data updates were slow and intransparent, I created this repo (archived at [#1](https://github.com/noahvogt/modulplaner-backend) [#2](https://git.noahvogt.com/noah/modulplaner-backend)) as a solution.
+
+## Project Status & Roadmap
+
+Currently the core data generation is pretty solid. This projects was built to support API version 1.0.0 of [modulplaner-openapi-spec](https://codeberg.org/Modulplaner/openapi) (archived at [#1](https://github.com/noahvogt/modulplaner-openapi-spec) [#2](https://git.noahvogt.com/noah/modulplaner-openapi-spec)). Currently I am part of the team at [FHNW](https://fhnw.ch) that works on an implementation of the API Version 2.x.x. Instead of parsing pdf files, the goal is the get the data directly from [evento](https://www.swisslearninghub.com/en/angebot/evento-campus-management/), the campus managment software used at FHNW. The associated repositories for this rewrite are currently only visible to circa 10 members of a GitLab group on the [FHNW GitLab instace](https://gitlab.fhnw.ch).
+
+For this specific repo, the backlog is the following:
+
+- adding documentation on how the extraction works, and problems with this approach
+- addressing the problems in the source data and the frontend data formats (see the following sections)
+- verifying module / lecturer shorthands and rooms in class pdf cells
+- fixing module mapping + verification
+- fixing module dependencies
 
 ## Installation
 
@@ -11,7 +23,7 @@ You need to install
 - [python3](https://www.python.org)
 - the python dependencies in `requirements.txt`
 
-For some simple commands mentioned in this documentat, It is also recommended to install and setup
+For some simple commands mentioned in this documentation, It is also recommended to install and setup
 
 - [jq](https://github.com/jqlang/jq)
 - a working POSIX shell environment
@@ -67,16 +79,6 @@ Rips all data files from a live modulplaner-frontend server.
 
 For more information, show the cli arguments via `./rip_modulplaner_frontend_data.py -h`.
 
-## Project Roadmap
-
-Currently I am working on refining the core data generation. In the future, I can see myself also working on:
-
-- adding documentation on how the extraction works, and problems with this approach
-- adding documentation on the json's the frontend excepts, formulate json shemas
-- addressing the problems in the source data and the frontend data formats (see the following sections)
-- verifying module / lecturer shorthands and rooms in class pdf cells
-- fixing module mapping + verification
-- fixing module dependencies
 
 ## Problems in the Source Data
 - class pdf's cells sometimes cut off data like lecturer shorthands, which could be repaired by cross-referencing with the lecturer pdf
